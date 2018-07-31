@@ -64,14 +64,28 @@ class Recognize
     func stopRecording()
     {
         //stop recording
+        
         audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
+        recognitionTask?.finish()
+        if(!audioEngine.isRunning)
+        {
+            print("audio engine stopped running!")
+        }
+        
+        
     }
+    
+    
     
     
     
     func recordAndRecognize()
     {
         //else { return }
+        
+        
+        print("starting a new recording...")
         
         let node = audioEngine.inputNode
         
