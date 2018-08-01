@@ -217,7 +217,7 @@ extension LineChartView {
         let chartFormatter = LineChartFormatter(values: xValues)
         let xAxis = XAxis()
         
-        self.backgroundColor = .yellow
+        self.backgroundColor = .gray
         self.chartDescription?.enabled = false
         self.animate(xAxisDuration: 1.0, yAxisDuration: 1.0, easingOption: .easeInBounce)
         
@@ -233,7 +233,14 @@ extension LineChartView {
         self.rightAxis.enabled = false
         self.leftAxis.labelTextColor = .red
         self.xAxis.labelTextColor = .red
-       //  let xAxis = XAxis()
+        
+        let BP_target = ChartLimitLine(limit: 90.0, label: "Target Blood Pressure")
+        
+        self.leftAxis.addLimitLine(BP_target)
+        let BG_target = ChartLimitLine(limit: 70.0, label: "Target Blood Glucose")
+        self.leftAxis.addLimitLine(BG_target)
+        
+        //  let xAxis = XAxis()
      //   xAxis.valueFormatter = chartFormatter
         //self.xAxis.valueFormatter = xAxis.valueFormatter
     }
