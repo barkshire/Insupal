@@ -47,7 +47,7 @@ class ChartViewController: UIViewController,ChartViewDelegate {
     var systolic_data : [Double] = [] // systolic holder
     var bg_data : [Double] = [] // glucose holder
     var date_data : [String] = [] // dates from firebase
-    var dateString : [String]! // array to hold converted dateformats
+    var dateString : [String] = []// array to hold converted dateformats
     
     //high contrast mode
     @IBAction func clrSwitch(_ sender: UISwitch) {
@@ -67,12 +67,22 @@ class ChartViewController: UIViewController,ChartViewDelegate {
         }
         read()
         // updateGraph()
-        
+        print("viewdidload b4")
+        // setChart()
     }
     
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
+    }
+    
+    // Generate graph button
+    @IBAction func testbutt(_ sender: UIButton) {
+        //updateGraph()
+        print("before setChart is called after button")
+        setChart()
+        print("after setChart is called after button")
+        
     }
     
     
@@ -94,51 +104,167 @@ class ChartViewController: UIViewController,ChartViewDelegate {
                 let logSystolicBP = logObject?["systolicBP"]
                 let logDate = logObject?["date"]
                 
+                
+                
                 self.bg_data.append(logBloodGlucose as! Double)
                 self.systolic_data.append(logSystolicBP as! Double)
                 self.date_data.append(logDate as! String)
+                
                 print(self.bg_data)
                 print(self.systolic_data)
                 print(self.date_data)
+                
+                
             }
-            
             let dateFormatter = DateFormatter()
-            var dateString: [String] = [String]()
+            // let dateString: [String] = [String]()
             for i in self.date_data {
                 dateFormatter.dateFormat = "mm/dd/yyyy HH:mm"
                 let date_array = dateFormatter.date(from: i)
-                dateFormatter.dateFormat = "dd hh:mm"
+                dateFormatter.dateFormat = "HH ddMMM"
                 let dateObj = dateFormatter.string(from: date_array!)
-                dateString.append(dateObj)
+                self.dateString.append(dateObj)
             }
-            print(dateString)
+            print("1")
+            print(self.dateString)
 
             
+            
         }) { (err: Error) in
-            
             print("\(err.localizedDescription)")
-            
         }
-        
     }
     
-    // Generate graph button
-    @IBAction func testbutt(_ sender: UIButton) {
-         //updateGraph()
-        setChart()
-    }
+
     
     // trying using setChart()
     func setChart(){
-        // let months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-        
-        
-        
-        //let unitsSold = [20.0, 4.0, 3.0, 6.0, 12.0, 16.0, 4.0, 18.0, 2.0, 4.0, 5.0, 4.0]
-        
+        print("setChart is called to see dateString again")
+        print(dateString)
+        print("see if dateString is empty")
         chtChart.setLineChartData(xValues: dateString, y1Values: systolic_data, y2Values: bg_data, label: "Glucose & Blood pressure level")
+        
     }
 }
+
+
+extension LineChartView {
+    
+    private class LineChartFormatter: NSObject, IAxisValueFormatter {
+        
+        var labels: [String] = []
+        
+        init(values: [String]) {
+            super.init()
+            self.labels = values
+           // self.labels = labels
+        }
+        
+        func stringForValue(_ value: Double, axis: AxisBase?) -> String {
+            let val = Int(value)
+            
+            if val >= 0 && val < labels.count {
+                
+                return labels[Int(val)]
+                
+            }
+            
+            return ""
+            // return labels[Int(value) % labels.count]
+        }
+        
+        
+ 
+    }
+    
+    func setLineChartData(xValues: [String], y1Values: [Double], y2Values: [Double], label: String) {
+        
+        var dataEntries1: [ChartDataEntry] = []
+        var dataEntries2: [ChartDataEntry] = []
+        
+        
+        
+        for i in 0..<y1Values.count {
+            let dataEntry1 = ChartDataEntry(x: Double(i), y: y1Values[i], data: xValues as AnyObject)
+            dataEntries1.append(dataEntry1)
+        }
+        let systolic = LineChartDataSet(values: dataEntries1, label: "Blood Pressure")
+        systolic.setCircleColors(.red)
+        systolic.circleHoleColor = .red
+        systolic.circleRadius = 3
+        systolic.colors = ChartColorTemplates.joyful()
+        //systolic.setColor(.red)
+        systolic.valueTextColor = .red
+        systolic.valueFont = UIFont(name: "Helvetica", size: 12.0)!
+        
+        for i in 0..<y2Values.count {
+            let dataEntry2 = ChartDataEntry(x: Double(i), y: y2Values[i], data: xValues as AnyObject)
+            dataEntries2.append(dataEntry2)
+        }
+        let bloodGlucose = LineChartDataSet(values: dataEntries2, label: "Blood Glucose")
+        bloodGlucose.setCircleColors(.blue)
+        bloodGlucose.circleHoleColor = .blue
+        bloodGlucose.circleRadius = 3
+        //bloodGlucose.setColor(.blue)
+        bloodGlucose.colors = ChartColorTemplates.pastel()
+        bloodGlucose.valueTextColor = .blue
+        bloodGlucose.valueFont = UIFont(name: "Helvetica", size: 12.0)!
+        
+        let chartData : LineChartData = LineChartData(dataSets: [systolic, bloodGlucose])
+        self.data = chartData
+        
+        //self.xAxis.valueFormatter = LineChartFormatter(values: xValues)
+        let chartFormatter = LineChartFormatter(values: xValues)
+        let xAxis = XAxis()
+        
+        self.backgroundColor = .yellow
+        self.chartDescription?.enabled = false
+        self.animate(xAxisDuration: 1.0, yAxisDuration: 1.0, easingOption: .easeInBounce)
+        
+        xAxis.valueFormatter = chartFormatter
+        self.xAxis.valueFormatter = xAxis.valueFormatter
+        self.xAxis.labelCount = xValues.count
+        self.xAxis.labelPosition = .bottom
+        self.xAxis.drawLabelsEnabled = true
+        self.xAxis.enabled = true
+        self.xAxis.granularityEnabled = true
+        self.xAxis.granularity = 1
+        self.xAxis.drawLimitLinesBehindDataEnabled = true
+        self.rightAxis.enabled = false
+        self.leftAxis.labelTextColor = .red
+        self.xAxis.labelTextColor = .red
+       //  let xAxis = XAxis()
+     //   xAxis.valueFormatter = chartFormatter
+        //self.xAxis.valueFormatter = xAxis.valueFormatter
+    }
+}
+        /*
+        var chartDataSet : [LineChartDataSet] = [LineChartDataSet]()
+        chartDataSet.append(systolic)
+        chartDataSet.append(bloodGlucose)
+ */
+        ////////////
+        //let formatter: XAxisStringValueFormatter = XAxisStringValueFormatter(values: xValues)
+       // let xaxis: XAxis = XAxis()
+       // var dataEntries: [ChartDataEntry] = []
+      //  for i in 0..<xValues.count {
+        //    let dataEntry = ChartDataEntry(x: Double(i), y: yValues[i], data: xValues as AnyObject)
+          //  dataEntries.append(dataEntry)
+        //}
+        //xaxis.valueFormatter = formatter
+        
+       // let lineChartDataSet = LineChartDataSet(values: dataEntries, label: "Price")
+        
+       // let data: LineChartData = LineChartData(dataSets: [lineChartDataSet])
+  //      self.lineChartView.data = data
+    //    self.lineChartView.xAxis.valueFormatter = xaxis.valueFormatter
+ ///////////
+        //let chartDataSet = LineChartDataSet(values: dataEntries, label: label)
+        //let chartData = LineChartData(dataSet: chartDataSet)
+        
+        
+
+
     /*
     func setChart(dataPoints: [String], values: [Double]) {
         
@@ -237,56 +363,6 @@ class ChartViewController: UIViewController,ChartViewDelegate {
     }
  */
 
-
-extension LineChartView {
-    
-    private class LineChartFormatter: NSObject, IAxisValueFormatter {
-        
-        var labels: [String] = []
-        
-        func stringForValue(_ value: Double, axis: AxisBase?) -> String {
-            return labels[Int(value)]
-        }
-        
-        init(labels: [String]) {
-            super.init()
-            self.labels = labels
-        }
-    }
-    
-    func setLineChartData(xValues: [String], y1Values: [Double], y2Values: [Double], label: String) {
-        
-        var dataEntries1: [ChartDataEntry] = []
-        var dataEntries2: [ChartDataEntry] = []
-        
-        for i in 0..<y1Values.count {
-            let dataEntry1 = ChartDataEntry(x: Double(i), y: y1Values[i])
-            dataEntries1.append(dataEntry1)
-        }
-        let systolic = LineChartDataSet(values: dataEntries1, label: "Blood Pressure")
-        
-        for i in 0..<y2Values.count {
-            let dataEntry2 = ChartDataEntry(x: Double(i), y: y2Values[i])
-            dataEntries2.append(dataEntry2)
-        }
-        let bloodGlucose = LineChartDataSet(values: dataEntries2, label: "Blood Glucose")
-        
-        var chartDataSet : [LineChartDataSet] = [LineChartDataSet]()
-        chartDataSet.append(systolic)
-        chartDataSet.append(bloodGlucose)
-        
-        //let chartDataSet = LineChartDataSet(values: dataEntries, label: label)
-        //let chartData = LineChartData(dataSet: chartDataSet)
-        let chartData : LineChartData = LineChartData(dataSets: chartDataSet)
-        
-        let chartFormatter = LineChartFormatter(labels: xValues)
-        let xAxis = XAxis()
-        xAxis.valueFormatter = chartFormatter
-        self.xAxis.valueFormatter = xAxis.valueFormatter
-        
-        self.data = chartData
-    }
-}
 
 /*
  // MARK: - Navigation
