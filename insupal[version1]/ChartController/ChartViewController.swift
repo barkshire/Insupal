@@ -235,10 +235,12 @@ extension LineChartView {
         self.xAxis.labelTextColor = .red
         
         let BP_target = ChartLimitLine(limit: 90.0, label: "Target Blood Pressure")
-        
         self.leftAxis.addLimitLine(BP_target)
+        
         let BG_target = ChartLimitLine(limit: 70.0, label: "Target Blood Glucose")
         self.leftAxis.addLimitLine(BG_target)
+        BP_target.lineColor = .red
+        BG_target.lineColor = .blue
         
         //  let xAxis = XAxis()
      //   xAxis.valueFormatter = chartFormatter
